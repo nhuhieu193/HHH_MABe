@@ -1,0 +1,35 @@
+name: PoC - TIDAL check-tidalapi-spec (verbatim lines 1-32)
+
+on:
+  schedule:
+    # Runs at 00:00 UTC every day
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+  pull-requests: write
+
+jobs:
+  check-api-spec:
+    runs-on: ubuntu-latest
+    outputs:
+      changes_found: ${{ steps.compare.outputs.changes_found }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check for existing PR
+        id: check_pr
+        uses: ./.github/actions/check-api-pr
+
+      - name: Checkout PR branch if exists
+        if: steps.check_pr.outputs.existing_pr == 'true'
+        run: |
+          git fetch origin ${{ steps.check_pr.outputs.pr_branch }}
+          git checkout ${{ steps.check_pr.outputs.pr_branch }}
+          echo "Using API spec from PR branch: ${{ steps.check_pr.outputs.pr_branch }}"
+
+      - name: done
+        run: echo finished
